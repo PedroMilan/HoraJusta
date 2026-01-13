@@ -34,10 +34,10 @@ export default function App({ Component, pageProps }: AppProps) {
           content="Controle suas horas de trabalho de forma simples e tenha clareza sobre produtividade e valor do seu tempo. Projeto desenvolvido em React e Next.js."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://SEU-PROJETO.vercel.app" />
+        <meta property="og:url" content="https://horajusta.vercel.app/" />
         <meta
           property="og:image"
-          content="https://SEU-PROJETO.vercel.app/og-image.png"
+          content="https://horajusta.vercel.app/favicon.png"
         />
         <meta property="og:site_name" content="HoraJusta" />
 
@@ -53,7 +53,7 @@ export default function App({ Component, pageProps }: AppProps) {
         />
         <meta
           name="twitter:image"
-          content="https://SEU-PROJETO.vercel.app/og-image.png"
+          content="https://horajusta.vercel.app/favicon.png"
         />
       </Head>
 
