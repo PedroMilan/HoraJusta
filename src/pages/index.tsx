@@ -1,78 +1,156 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { useState, useEffect } from "react";
+import { Timer } from "@/components/Timer";
+import { SessionsList } from "@/components/SessionsList";
+import { Summary } from "@/components/Summary";
+import { CompanyManager } from "@/components/CompanyManager";
+import { CompanySummary } from "@/components/CompanySummary";
+import { Clock } from "lucide-react";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+export interface Company {
+  id: string;
+  name: string;
+  hourlyRate: number;
+  color: string;
+}
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+export interface WorkSession {
+  id: string;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  date: string;
+  companyId: string;
+}
 
 export default function Home() {
+  const [sessions, setSessions] = useState<WorkSession[]>(() => {
+    if (typeof window === "undefined") return [];
+    const saved = localStorage.getItem("workSessions");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [companies, setCompanies] = useState<Company[]>(() => {
+    if (typeof window === "undefined") return [];
+    const saved = localStorage.getItem("companies");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [timerState, setTimerState] = useState<{
+    isRunning: boolean;
+    startTime: number | null;
+    companyId: string | null;
+  }>(() => {
+    if (typeof window === "undefined") {
+      return { isRunning: false, startTime: null, companyId: null };
+    }
+
+    const saved = localStorage.getItem("timerState");
+    return saved
+      ? JSON.parse(saved)
+      : { isRunning: false, startTime: null, companyId: null };
+  });
+
+  const { isRunning, startTime, companyId } = timerState;
+
+  /* Persistência (effects válidos) */
+
+  useEffect(() => {
+    localStorage.setItem("workSessions", JSON.stringify(sessions));
+  }, [sessions]);
+
+  useEffect(() => {
+    localStorage.setItem("companies", JSON.stringify(companies));
+  }, [companies]);
+
+  useEffect(() => {
+    localStorage.setItem("timerState", JSON.stringify(timerState));
+  }, [timerState]);
+
+  /* Ações */
+
+  const startTimer = (companyId: string) => {
+    const now = Date.now();
+    setTimerState({
+      isRunning: true,
+      startTime: now,
+      companyId,
+    });
+  };
+
+  const stopTimer = () => {
+    if (startTime && companyId) {
+      const now = Date.now();
+      const duration = Math.floor((now - startTime) / 1000);
+      const dateStr = new Date(startTime).toISOString().split("T")[0];
+
+      const newSession: WorkSession = {
+        id: `${startTime}-${now}`,
+        startTime,
+        endTime: now,
+        duration,
+        date: dateStr,
+        companyId,
+      };
+
+      setSessions((prev) => [newSession, ...prev]);
+    }
+
+    setTimerState({
+      isRunning: false,
+      startTime: null,
+      companyId: null,
+    });
+  };
+
+  const deleteSession = (id: string) => {
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black`}
-    >
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the index.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2.5 bg-gray-900 rounded-lg">
+              <Clock className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Controle de Horas
+              </h1>
+              <p className="text-gray-600 text-sm">
+                Registre seu tempo de trabalho
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Timer
+              isRunning={isRunning}
+              startTime={startTime}
+              currentCompanyId={companyId}
+              companies={companies}
+              onStart={startTimer}
+              onStop={stopTimer}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs/pages/getting-started?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+            <Summary sessions={sessions} companies={companies} />
+
+            <SessionsList
+              sessions={sessions}
+              companies={companies}
+              onDelete={deleteSession}
+            />
+          </div>
+
+          <div className="space-y-6">
+            <CompanyManager companies={companies} onUpdate={setCompanies} />
+            <CompanySummary sessions={sessions} companies={companies} />
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
